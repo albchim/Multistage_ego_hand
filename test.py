@@ -6,7 +6,10 @@ import torch.nn as nn
 import argparse
 from tqdm import tqdm
 import os
+import os.path as osp
+import glob
 from network.full_model import InterShape
+from config import cfg
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -17,16 +20,23 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+def selective_load_model(model, folder = cfg.full_model_dir):
+    model_file_list = glob.glob(osp.join(folder,'*.pth.tar'))
+    cur_epoch = max([int(file_name[file_name.find('snapshot_') + 9 : file_name.find('.pth.tar')]) for file_name in model_file_list])
+    model_path = osp.join(folder, 'snapshot_' + str(cur_epoch) + '.pth.tar')
+    para_dict=torch.load("{}".format(model_path))['network']
+    for k in model.state_dict().keys():
+        if k in para_dict:
+            model.state_dict()[k].copy_(para_dict[k])
+    return model
+
 
 def main():
     args = parse_args()
     model=InterShape(input_size=3,resnet_version=50,mano_neurons=[512, 512, 512, 512],mano_use_pca=False,\
                         cascaded_num=3,cascaded_input='double',heatmap_attention=True)
     device_run=torch.device('cuda:%d'%(args.gpu))
-    para_dict=torch.load("{}".format(args.model_path), map_location=device_run)
-    for k in model.state_dict().keys():
-        if k in para_dict:
-            model.state_dict()[k].copy_(para_dict[k])
+    model = selective_load_model(model)
     model.to(device_run)
     model.eval()
     print('load success')
@@ -41,20 +51,13 @@ def main():
         img=cv2.warpAffine(img,M,(INPUT_SIZE,INPUT_SIZE),flags=cv2.INTER_LINEAR,borderValue=[0,0,0])
         img=img[:,:,::-1].astype(np.float32)/255-0.5
         input_tensor=torch.tensor(img.transpose(2,0,1),device=device_run,dtype=torch.float32).unsqueeze(0)
-        right_mano_para_list,left_mano_para_list,trans_list=model(input_tensor)
-        right_mano_para=right_mano_para_list[-1]
-        left_mano_para=left_mano_para_list[-1]
-        trans=trans_list[0]
 
-        predict_right_length=(right_mano_para['joints3d'][:,9]-right_mano_para['joints3d'][:,0]).norm(dim=1)
-        predict_left_length=(left_mano_para['joints3d'][:,9]-left_mano_para['joints3d'][:,0]).norm(dim=1)
-        predict_right_joints=right_mano_para['joints3d']/predict_right_length[:,None,None]
-        predict_left_joints=left_mano_para['joints3d']/predict_left_length[:,None,None]
-        predict_right_verts=right_mano_para['verts3d']/predict_right_length[:,None,None]
-        predict_left_verts=left_mano_para['verts3d']/predict_left_length[:,None,None]
+        result, _, _=model(input_tensor)
+        right_mano_para=result[-1]['r']
+        left_mano_para=result[-1]['l']
 
-        predict_left_joints_trans=(predict_left_joints+trans[:,1:].view(-1,1,3))*torch.exp(trans[:,0,None,None])
-        predict_left_verts_trans=(predict_left_verts+trans[:,1:].view(-1,1,3))*torch.exp(trans[:,0,None,None])
+        predict_right_verts = right_mano_para['verts3d']
+        predict_left_verts_trans = left_mano_para['verts3d']
 
         output_file_name=img_name.split('.')[0]
         
@@ -70,11 +73,6 @@ def main():
             for f in left_face+1:
                 print("f %d %d %d"%(f[0],f[1],f[2]),file=file_object)
                 
-    
-    
-
-        
-
 
 if __name__=='__main__':
     main()

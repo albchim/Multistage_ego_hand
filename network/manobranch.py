@@ -54,6 +54,10 @@ class ManoBranch(nn.Module):
 
         # Pose layers to predict pose parameters
         self.pose_reg = nn.Linear(base_neurons[-1], mano_pose_size)
+        #################################################
+        # ADD GLOBAL TRANSLATION REGRESSION BRANCH
+        #################################################
+
         #if not self.use_pca:
         #    # Initialize all nondiagonal items on rotation matrix weights to 0
         #    self.pose_reg.bias.data.fill_(0)

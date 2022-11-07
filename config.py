@@ -2,8 +2,16 @@ class Config:
     TRAIN_IMAGE_WIDTH=256
     TRAIN_IMAGE_HEIGHT=256
 
+    smplx_path = 'mano/models/'
+
+    input_img_shape = (256, 256)
+    output_shape = (input_img_shape[0]//4, input_img_shape[1]//4)
     output_hm_shape = (64, 64, 64)
     output_root_hm_shape = 64 
+    sigma = 2.5
+    model_dir = 'model/finetune/'
+    full_model_dir = 'model/finetune_full/'
+    model_dir_w_depth = 'model/finetune/w_depth'
     
     ATTENTION_WIDTH=16
     ATTENTION_HEIGHT=16

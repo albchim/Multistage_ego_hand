@@ -13,11 +13,11 @@ from config import cfg
 import math
 
 class JointHeatmapLoss(nn.Module):
-    def __ini__(self):
+    def __init__(self):
         super(JointHeatmapLoss, self).__init__()
 
-    def forward(self, joint_out, joint_gt, joint_valid):
-        loss = (joint_out - joint_gt)**2 * joint_valid[:,:,None,None,None]
+    def forward(self, joint_out, joint_gt):#, joint_valid):
+        loss = torch.abs(joint_out - joint_gt)#**2# * joint_valid[:,:,None,None,None]
         return loss
 
 class HandTypeLoss(nn.Module):
@@ -35,7 +35,6 @@ class RelRootDepthLoss(nn.Module):
     def __init__(self):
         super(RelRootDepthLoss, self).__init__()
 
-    def forward(self, root_depth_out, root_depth_gt, root_valid):
-        loss = torch.abs(root_depth_out - root_depth_gt) * root_valid
+    def forward(self, root_depth_out, root_depth_gt):#, root_valid):
+        loss = torch.abs(root_depth_out - root_depth_gt)# * root_valid
         return loss
-

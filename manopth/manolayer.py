@@ -74,19 +74,19 @@ class ManoLayer(Module):
         self.smpl_data = smpl_data
 
         self.register_buffer('th_betas',
-                             torch.Tensor(smpl_data['betas'].r).unsqueeze(0))
+                             torch.Tensor(smpl_data['betas'].r.copy()).unsqueeze(0))
         self.register_buffer('th_shapedirs',
-                             torch.Tensor(smpl_data['shapedirs'].r))
+                             torch.Tensor(smpl_data['shapedirs'].r.copy()))
         self.register_buffer('th_posedirs',
-                             torch.Tensor(smpl_data['posedirs'].r))
+                             torch.Tensor(smpl_data['posedirs'].r.copy()))
         self.register_buffer(
             'th_v_template',
-            torch.Tensor(smpl_data['v_template'].r).unsqueeze(0))
+            torch.Tensor(smpl_data['v_template'].r.copy()).unsqueeze(0))
         self.register_buffer(
             'th_J_regressor',
             torch.Tensor(np.array(smpl_data['J_regressor'].toarray())))
         self.register_buffer('th_weights',
-                             torch.Tensor(smpl_data['weights'].r))
+                             torch.Tensor(smpl_data['weights'].r.copy()))
         self.register_buffer('th_faces',
                              torch.Tensor(smpl_data['f'].astype(np.int32)).long())
 
